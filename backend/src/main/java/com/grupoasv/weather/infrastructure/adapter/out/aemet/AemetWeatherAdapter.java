@@ -49,7 +49,8 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
             return municipios;
         } catch (Exception e) {
             log.error("Error al obtener la lista de municipios de AEMET: {}", e.getMessage(), e);
-            throw new WeatherDomainException("Error obteniendo municipios: " + e.getMessage(), e);
+            // El detalle técnico se queda en el log; al cliente solo le llega un mensaje genérico
+            throw new WeatherDomainException("Error obteniendo municipios de AEMET", e);
         }
     }
 

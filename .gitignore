@@ -6,3 +6,8 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Variables de entorno locales (secretos). Solo se versiona la plantilla .env.example
+.env
+.env.*
+!.env.example
