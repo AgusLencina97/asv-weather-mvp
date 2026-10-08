@@ -1,0 +1,42 @@
+[ {
+  "elaborado" : "2026-10-08T20:55:08",
+  "nombre" : "Agost",
+  "provincia" : "Alacant/Alicante",
+  "prediccion" : {
+    "dia" : [ {
+      "probPrecipitacion" : [
+        { "value" : 0, "periodo" : "00-24" },
+        { "value" : 0, "periodo" : "00-12" },
+        { "value" : 0, "periodo" : "12-24" },
+        { "value" : 0, "periodo" : "00-06" },
+        { "value" : 0, "periodo" : "06-12" },
+        { "value" : 0, "periodo" : "12-18" },
+        { "value" : 90, "periodo" : "18-24" }
+      ],
+      "temperatura" : { "maxima" : 26, "minima" : 17, "dato" : [ ] },
+      "fecha" : "2026-10-08T00:00:00"
+    }, {
+      "probPrecipitacion" : [
+        { "value" : 45, "periodo" : "00-24" },
+        { "value" : 35, "periodo" : "00-12" },
+        { "value" : 25, "periodo" : "12-24" },
+        { "value" : 5, "periodo" : "00-06" },
+        { "value" : 10, "periodo" : "06-12" },
+        { "value" : "", "periodo" : "12-18" },
+        { "value" : 15, "periodo" : "18-24" }
+      ],
+      "temperatura" : { "maxima" : 24, "minima" : 13, "dato" : [ ] },
+      "fecha" : "2026-10-09T00:00:00"
+    }, {
+      "probPrecipitacion" : [
+        { "value" : 20, "periodo" : "00-24" },
+        { "value" : 0, "periodo" : "00-12" },
+        { "value" : 20, "periodo" : "12-24" }
+      ],
+      "temperatura" : { "maxima" : 22, "minima" : 12, "dato" : [ ] },
+      "fecha" : "2026-10-10T00:00:00"
+    } ]
+  },
+  "id" : 3002,
+  "version" : 1.0
+} ]

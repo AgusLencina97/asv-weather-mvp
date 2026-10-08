@@ -1,3 +1,7 @@
 package com.grupoasv.weather.infrastructure.adapter.out.aemet;
 
-public record AemetResponseWrapper(int estado, String datos, String metadatos) {}
+/**
+ * Primera respuesta de AEMET. El campo "estado" es el resultado real de la petición:
+ * AEMET contesta HTTP 200 incluso cuando el recurso no existe (estado 404).
+ */
+public record AemetResponseWrapper(String descripcion, int estado, String datos, String metadatos) {}
