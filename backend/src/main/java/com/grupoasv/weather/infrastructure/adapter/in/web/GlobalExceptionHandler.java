@@ -1,25 +1,44 @@
 package com.grupoasv.weather.infrastructure.adapter.in.web;
 
+import com.grupoasv.weather.domain.exception.ResourceNotFoundException;
 import com.grupoasv.weather.domain.exception.WeatherDomainException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.util.Map;
+/**
+ * Traduce excepciones a respuestas HTTP con formato estándar RFC 9457 (ProblemDetail).
+ * La clase base ya resuelve los errores de petición de Spring MVC (parámetros que faltan,
+ * tipos inválidos, validaciones) como 400.
+ */
+@Slf4j
+@RestControllerAdvice
+public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-@ControllerAdvice
-public class GlobalExceptionHandler {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ProblemDetail handleNotFound(ResourceNotFoundException ex) {
+        return problem(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
+    }
 
     @ExceptionHandler(WeatherDomainException.class)
-    public ResponseEntity<Map<String, String>> handleDomainException(WeatherDomainException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(Map.of("error", ex.getMessage()));
+    public ProblemDetail handleExternalServiceError(WeatherDomainException ex) {
+        // No se expone ex.getMessage(): el detalle técnico ya está en el log
+        return problem(HttpStatus.BAD_GATEWAY, "Error en el servicio de AEMET",
+                "No se pudo obtener la información de AEMET. Inténtalo de nuevo en unos minutos.");
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Error interno del servidor"));
+    public ProblemDetail handleUnexpected(Exception ex) {
+        log.error("Error no controlado", ex);
+        return problem(HttpStatus.INTERNAL_SERVER_ERROR, "Error interno", "Error interno del servidor");
+    }
+
+    private static ProblemDetail problem(HttpStatus status, String title, String detail) {
+        ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);
+        problem.setTitle(title);
+        return problem;
     }
 }
