@@ -1,0 +1,83 @@
+.weather-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+}
+
+.controls-row {
+  display: flex;
+  gap: 1rem;
+
+  .search-box {
+    flex: 1;
+  }
+
+  .unit-box {
+    width: 100px;
+  }
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.weather-card {
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.main-weather {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 2rem 0;
+
+  .temp-display {
+    color: #555;
+
+    .temp-value {
+      font-size: 6rem;
+      line-height: 1;
+    }
+
+    .temp-unit {
+      font-size: 3rem;
+      vertical-align: top;
+    }
+  }
+
+  .weather-icon {
+    font-size: 6rem;
+    height: 6rem;
+    width: 6rem;
+    color: #fbbc04;
+  }
+}
+
+.precipitation-grid {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #eee;
+  padding-top: 1rem;
+
+  .prob-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .prob-val {
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    .prob-time {
+      font-size: 0.8rem;
+      color: #888;
+    }
+  }
+}

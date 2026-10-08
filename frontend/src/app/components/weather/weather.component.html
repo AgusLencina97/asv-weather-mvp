@@ -1,0 +1,61 @@
+<div class="weather-container">
+  <div class="controls-row">
+    <mat-form-field appearance="outline" class="search-box">
+      <mat-label>Buscar Municipio</mat-label>
+      <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" />
+      <mat-icon matSuffix>search</mat-icon>
+      <mat-autocomplete
+        #auto="matAutocomplete"
+        [displayWith]="displayFn"
+        (optionSelected)="onMunicipioSelected($event)"
+      >
+        @for (m of store.municipalities(); track m.codigo) {
+          <mat-option [value]="m">{{ m.nombre }}</mat-option>
+        }
+      </mat-autocomplete>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="unit-box">
+      <mat-select [value]="store.unit()" (selectionChange)="onUnitChange($event.value)">
+        <mat-option value="G_CEL">°C</mat-option>
+        <mat-option value="G_FAH">°F</mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  @if (store.isLoading()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  @if (store.prediction() && store.selectedMunicipio(); as prediction) {
+    <mat-card class="weather-card">
+      <mat-card-header>
+        <mat-card-title>{{ store.selectedMunicipio()?.nombre }}</mat-card-title>
+        <mat-card-subtitle>{{ today | date: 'EEEE, d MMMM y' }}</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="main-weather">
+          <div class="temp-display">
+            <span class="temp-value">{{ store.prediction()?.mediaTemperatura }}</span>
+            <span class="temp-unit"
+              >°{{ store.prediction()?.unidadTemperatura === 'G_FAH' ? 'F' : 'C' }}</span
+            >
+          </div>
+          <mat-icon class="weather-icon">wb_cloudy</mat-icon>
+        </div>
+
+        <div class="precipitation-grid">
+          @for (prob of store.prediction()?.probPrecipitacion; track prob.periodo) {
+            <div class="prob-item">
+              <span class="prob-val">{{ prob.probabilidad }}%</span>
+              <span class="prob-time">{{ prob.periodo }}</span>
+            </div>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
