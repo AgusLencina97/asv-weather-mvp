@@ -1,5 +1,7 @@
 # ASV Weather
 
+[![CI](https://github.com/AgusLencina97/asv-weather-mvp/actions/workflows/ci.yml/badge.svg)](https://github.com/AgusLencina97/asv-weather-mvp/actions/workflows/ci.yml)
+
 Aplicación web para consultar la previsión meteorológica del día siguiente en cualquier municipio de España, a partir de [AEMET OpenData](https://opendata.aemet.es/).
 
 - **Backend**: Java 25 + Spring Boot 4, arquitectura hexagonal, autenticación JWT.
