@@ -8,6 +8,7 @@ import com.grupoasv.weather.domain.model.PrecipitationProbability;
 import com.grupoasv.weather.domain.port.out.WeatherExternalPort;
 import com.grupoasv.weather.infrastructure.config.CacheConfig;
 import feign.FeignException;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,8 +49,17 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
     @Value("${aemet.api.key}")
     private String apiKey;
 
+    // Una key vacía (p. ej. .env copiado sin rellenar) se detecta al arrancar, no en la primera búsqueda
+    @PostConstruct
+    void validateApiKey() {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalStateException("AEMET_API_KEY está vacía: configúrala en backend/.env (ver .env.example)");
+        }
+    }
+
     @Override
-    @Cacheable(CacheConfig.MUNICIPIOS) // El listado es lento y casi nunca cambia
+    // sync = true: si varias peticiones encuentran la caché vacía a la vez, solo una llama a AEMET y el resto espera su resultado
+    @Cacheable(value = CacheConfig.MUNICIPIOS, sync = true) // El listado es lento y casi nunca cambia
     public List<Municipio> fetchAllMunicipalities() {
         JsonNode root = fetchDatos(() -> feignClient.getMunicipiosUrl(apiKey), "el listado de municipios");
 
@@ -65,7 +75,7 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
     }
 
     @Override
-    @Cacheable(CacheConfig.PREDICCIONES) // Clave = municipio + fecha: no depende de la unidad y caduca sola al cambiar de día
+    @Cacheable(value = CacheConfig.PREDICCIONES, sync = true) // Clave = municipio + fecha: no depende de la unidad y caduca sola al cambiar de día
     public DailyForecast fetchDailyForecast(String municipioId, LocalDate fecha) {
         JsonNode root = fetchDatos(() -> feignClient.getPrediccionUrl(municipioId, apiKey),
                 "la predicción del municipio " + municipioId);
