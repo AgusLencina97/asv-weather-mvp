@@ -1,3 +1,16 @@
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+
+  .app-title {
+    font: var(--mat-sys-title-medium);
+    color: #555;
+  }
+}
+
 .weather-container {
   max-width: 600px;
   margin: 2rem auto;
@@ -14,11 +27,7 @@
   }
 
   .unit-box {
-    width: 100px;
-  }
-
-  .logout-button {
-    margin-top: 0.5rem;
+    width: 180px;
   }
 
   .search-spinner {
@@ -80,7 +89,11 @@
     font-size: 6rem;
     height: 6rem;
     width: 6rem;
-    color: #fbbc04;
+    color: #42a5f5;
+
+    &.weather-icon--sunny {
+      color: #fbbc04;
+    }
   }
 }
 
@@ -104,6 +117,36 @@
     .prob-time {
       font-size: 0.8rem;
       color: #888;
+    }
+  }
+}
+
+// Móvil: buscador y unidad en filas separadas, y temperatura e icono más pequeños para que quepan
+@media (max-width: 480px) {
+  .controls-row {
+    flex-direction: column;
+    gap: 0;
+
+    .unit-box {
+      width: 100%;
+    }
+  }
+
+  .main-weather {
+    .temp-display {
+      .temp-value {
+        font-size: 4rem;
+      }
+
+      .temp-unit {
+        font-size: 2rem;
+      }
+    }
+
+    .weather-icon {
+      font-size: 4rem;
+      height: 4rem;
+      width: 4rem;
     }
   }
 }

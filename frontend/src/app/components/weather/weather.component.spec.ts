@@ -212,6 +212,16 @@ describe('WeatherComponent', () => {
       fixture.detectChanges();
 
       expect(el().querySelector('.weather-icon')?.textContent?.trim()).toBe('rainy');
+      expect(el().querySelector('.weather-icon')?.classList).not.toContain('weather-icon--sunny');
+    });
+
+    it('debería marcar el icono de sol para mostrarlo en otro color', () => {
+      mockStore.selectedMunicipio.set(agost);
+      mockStore.prediction.set({ ...prediction, probPrecipitacion: [{ probabilidad: 0, periodo: '00-24' }] });
+      fixture.detectChanges();
+
+      expect(el().querySelector('.weather-icon')?.textContent?.trim()).toBe('sunny');
+      expect(el().querySelector('.weather-icon')?.classList).toContain('weather-icon--sunny');
     });
 
     it('debería mostrar °F cuando la unidad de la predicción es G_FAH', () => {

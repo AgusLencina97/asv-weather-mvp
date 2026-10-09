@@ -1,3 +1,10 @@
+<header class="app-header">
+  <span class="app-title">ASV Weather</span>
+  <button mat-icon-button type="button" (click)="logout()" aria-label="Cerrar sesión" matTooltip="Cerrar sesión">
+    <mat-icon>logout</mat-icon>
+  </button>
+</header>
+
 <div class="weather-container">
   <div class="controls-row">
     <mat-form-field appearance="outline" class="search-box">
@@ -24,16 +31,12 @@
 
     <mat-form-field appearance="outline" class="unit-box">
       <mat-label>Unidad</mat-label>
-      <mat-select [value]="store.unit()" (selectionChange)="onUnitChange($event.value)">
+      <mat-select [value]="store.unit()" (selectionChange)="onUnitChange($event.value)"
+                  placeholder="Por defecto (°C)">
         <mat-option value="G_CEL">°C</mat-option>
         <mat-option value="G_FAH">°F</mat-option>
       </mat-select>
     </mat-form-field>
-
-    <button mat-icon-button class="logout-button" type="button" (click)="logout()"
-            aria-label="Cerrar sesión" matTooltip="Cerrar sesión">
-      <mat-icon>logout</mat-icon>
-    </button>
   </div>
 
   @if (store.searchError(); as message) {
@@ -59,7 +62,8 @@
             <span class="temp-value">{{ prediction.mediaTemperatura | number: '1.0-1' }}</span>
             <span class="temp-unit">°{{ prediction.unidadTemperatura === 'G_FAH' ? 'F' : 'C' }}</span>
           </div>
-          <mat-icon class="weather-icon" aria-hidden="true">{{ weatherIcon() }}</mat-icon>
+          <mat-icon class="weather-icon" [class.weather-icon--sunny]="weatherIcon() === 'sunny'"
+                    aria-hidden="true">{{ weatherIcon() }}</mat-icon>
         </div>
 
         <h3 class="precipitation-title">Probabilidad de precipitación</h3>
