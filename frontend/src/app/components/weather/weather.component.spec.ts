@@ -1,44 +1,65 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal } from '@angular/core';
+import { LOCALE_ID, signal } from '@angular/core';
+import { registerLocaleData } from '@angular/common';
+import localeEs from '@angular/common/locales/es';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { Observable } from 'rxjs';
 import { vi } from 'vitest';
 import { WeatherComponent } from './weather.component';
 import { WeatherStore } from '../../stores/weather.store';
 import { AuthService } from '../../services/auth.service';
 import { Municipio } from '../../interfaces/models/municipio';
+import { TemperatureUnit } from '../../interfaces/models/temperature-unit';
 import { WeatherPrediction } from '../../interfaces/models/weather-prediction';
+
+// Mismo locale que la app (app.config.ts) para comprobar el formato español de fechas y números
+registerLocaleData(localeEs, 'es');
 
 describe('WeatherComponent', () => {
   let component: WeatherComponent;
   let fixture: ComponentFixture<WeatherComponent>;
-  let mockStore: {
-    municipalities: ReturnType<typeof signal<Municipio[]>>;
-    unit: ReturnType<typeof signal<string>>;
-    isLoading: ReturnType<typeof signal<boolean>>;
-    prediction: ReturnType<typeof signal<WeatherPrediction | null>>;
-    selectedMunicipio: ReturnType<typeof signal<Municipio | null>>;
-    searchMunicipalities: ReturnType<typeof vi.fn>;
-    setSelectedMunicipio: ReturnType<typeof vi.fn>;
-    updateUnit: ReturnType<typeof vi.fn>;
-  };
-
+  let searchedValues: string[];
   let mockAuthService: { logout: ReturnType<typeof vi.fn> };
 
   const agost: Municipio = { codigo: '03002', nombre: 'Agost' };
+  const prediction: WeatherPrediction = {
+    fecha: '2026-10-10',
+    mediaTemperatura: 21.5,
+    unidadTemperatura: 'G_CEL',
+    probPrecipitacion: [
+      { probabilidad: 10, periodo: '00-12' },
+      { probabilidad: 80, periodo: '12-24' },
+    ],
+  };
+
+  // Simula el store: searchMunicipalities recibe el observable del input, igual que un rxMethod
+  const createMockStore = () => ({
+    municipalities: signal<Municipio[]>([agost]),
+    noResults: signal(false),
+    isSearching: signal(false),
+    searchError: signal<string | null>(null),
+    unit: signal<TemperatureUnit | null>(null),
+    selectedMunicipio: signal<Municipio | null>(null),
+    prediction: signal<WeatherPrediction | null>(null),
+    isLoadingPrediction: signal(false),
+    predictionError: signal<string | null>(null),
+    searchMunicipalities: vi.fn((source$: Observable<string>) => source$.subscribe((v) => searchedValues.push(v))),
+    setSelectedMunicipio: vi.fn(),
+    updateUnit: vi.fn(),
+  });
+  let mockStore: ReturnType<typeof createMockStore>;
+
   const el = () => fixture.nativeElement as HTMLElement;
 
-  beforeEach(async () => {
-    mockStore = {
-      municipalities: signal<Municipio[]>([agost]),
-      unit: signal('G_CEL'),
-      isLoading: signal(false),
-      prediction: signal<WeatherPrediction | null>(null),
-      selectedMunicipio: signal<Municipio | null>(null),
-      searchMunicipalities: vi.fn(),
-      setSelectedMunicipio: vi.fn(),
-      updateUnit: vi.fn(),
-    };
+  const createComponent = () => {
+    fixture = TestBed.createComponent(WeatherComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  };
 
+  beforeEach(async () => {
+    searchedValues = [];
+    mockStore = createMockStore();
     mockAuthService = { logout: vi.fn() };
 
     await TestBed.configureTestingModule({
@@ -46,54 +67,67 @@ describe('WeatherComponent', () => {
       providers: [
         { provide: WeatherStore, useValue: mockStore },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: LOCALE_ID, useValue: 'es' },
       ],
     }).compileComponents();
-
-    fixture = TestBed.createComponent(WeatherComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
   it('debería crearse correctamente', () => {
+    createComponent();
+
     expect(component).toBeTruthy();
   });
 
   describe('búsqueda', () => {
-    it('debería buscar municipios en el store cuando el usuario escribe texto', () => {
+    beforeEach(() => createComponent());
+
+    it('debería enviar al store el texto que escribe el usuario', () => {
       component.searchControl.setValue('Ago');
-
-      expect(mockStore.searchMunicipalities).toHaveBeenCalledWith('Ago');
-    });
-
-    it('debería buscar con cadena vacía al limpiar el campo', () => {
       component.searchControl.setValue('');
 
-      expect(mockStore.searchMunicipalities).toHaveBeenCalledWith('');
+      expect(searchedValues).toEqual(['Ago', '']);
     });
 
-    it('no debería buscar cuando el valor no es texto (municipio seleccionado o null)', () => {
-      component.searchControl.setValue(agost as unknown as string);
-      component.searchControl.setValue(null);
+    it('no debería buscar cuando se elige una opción (el valor es un Municipio)', () => {
+      component.searchControl.setValue(agost);
 
-      expect(mockStore.searchMunicipalities).not.toHaveBeenCalled();
+      expect(searchedValues).toEqual([]);
+    });
+
+    it('debería mostrar "sin resultados" en el autocompletado', () => {
+      mockStore.municipalities.set([]);
+      mockStore.noResults.set(true);
+      fixture.detectChanges();
+
+      el().querySelector('input')!.dispatchEvent(new Event('focusin'));
+      fixture.detectChanges();
+
+      expect(document.body.textContent).toContain('No se encontraron municipios');
+    });
+
+    it('debería mostrar el error de búsqueda', () => {
+      mockStore.searchError.set('No se pudo conectar con el servidor.');
+      fixture.detectChanges();
+
+      expect(el().querySelector('[role="alert"]')?.textContent).toContain('No se pudo conectar');
     });
   });
 
-  describe('displayFn', () => {
-    it('debería formatear correctamente el nombre del municipio en el Autocomplete', () => {
-      expect(component.displayFn({ codigo: '1', nombre: 'Valencia' })).toBe('Valencia');
-    });
+  describe('displayMunicipio', () => {
+    beforeEach(() => createComponent());
 
     it.each([
-      ['null', null],
-      ['undefined', undefined],
-      ['sin nombre', { codigo: '1', nombre: '' }],
-    ])('debería devolver cadena vacía para un municipio %s', (_caso, value) => {
-      expect(component.displayFn(value as unknown as Municipio)).toBe('');
+      ['un municipio', agost, 'Agost'],
+      ['un texto', 'Ago', 'Ago'],
+      ['null', null, ''],
+    ])('debería mostrar correctamente %s en el input', (_caso, value, expected) => {
+      expect(component.displayMunicipio(value)).toBe(expected);
     });
   });
 
   describe('eventos', () => {
+    beforeEach(() => createComponent());
+
     it('debería llamar a updateUnit del store al cambiar la unidad', () => {
       component.onUnitChange('G_FAH');
 
@@ -105,44 +139,65 @@ describe('WeatherComponent', () => {
 
       expect(mockStore.setSelectedMunicipio).toHaveBeenCalledWith(agost);
     });
+
+    it('debería cerrar la sesión al pulsar el botón de logout', () => {
+      (el().querySelector('button[aria-label="Cerrar sesión"]') as HTMLButtonElement).click();
+
+      expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('último municipio recordado', () => {
+    it('debería mostrar en el input el municipio restaurado por el store', async () => {
+      mockStore.selectedMunicipio.set(agost);
+
+      createComponent();
+      await fixture.whenStable();
+
+      expect(el().querySelector('input')!.value).toBe('Agost');
+    });
   });
 
   describe('plantilla', () => {
-    const prediction: WeatherPrediction = {
-      mediaTemperatura: 21,
-      unidadTemperatura: 'G_CEL',
-      probPrecipitacion: [
-        { probabilidad: 10, periodo: '00-12' },
-        { probabilidad: 80, periodo: '12-24' },
-      ],
-    };
+    beforeEach(() => createComponent());
 
-    it('no debería mostrar spinner ni tarjeta del clima por defecto', () => {
-      expect(el().querySelector('mat-spinner')).toBeNull();
+    it('debería mostrar el mensaje inicial cuando no hay predicción', () => {
+      expect(el().querySelector('.empty-state')?.textContent).toContain('Busca un municipio');
       expect(el().querySelector('mat-card')).toBeNull();
     });
 
-    it('debería mostrar el spinner mientras carga', () => {
-      mockStore.isLoading.set(true);
+    it('debería mostrar el spinner mientras carga la predicción', () => {
+      mockStore.isLoadingPrediction.set(true);
       fixture.detectChanges();
 
-      expect(el().querySelector('mat-spinner')).not.toBeNull();
+      expect(el().querySelector('.spinner-container mat-spinner')).not.toBeNull();
     });
 
-    it('no debería mostrar la tarjeta si hay predicción pero no municipio seleccionado', () => {
-      mockStore.prediction.set(prediction);
+    it('debería mostrar el spinner pequeño del buscador mientras busca', () => {
+      mockStore.isSearching.set(true);
       fixture.detectChanges();
 
+      expect(el().querySelector('.search-spinner')).not.toBeNull();
+      expect(el().querySelector('.spinner-container')).toBeNull();
+    });
+
+    it('debería mostrar el error de la predicción', () => {
+      mockStore.predictionError.set('AEMET no tiene datos para el municipio');
+      fixture.detectChanges();
+
+      expect(el().querySelector('[role="alert"]')?.textContent).toContain('AEMET no tiene datos');
       expect(el().querySelector('mat-card')).toBeNull();
     });
 
-    it('debería mostrar la tarjeta con municipio, temperatura en °C y probabilidades', () => {
+    it('debería mostrar la tarjeta con la fecha de la predicción, temperatura en °C y probabilidades', () => {
       mockStore.selectedMunicipio.set(agost);
       mockStore.prediction.set(prediction);
       fixture.detectChanges();
 
       expect(el().querySelector('mat-card-title')?.textContent).toContain('Agost');
-      expect(el().querySelector('.temp-value')?.textContent).toContain('21');
+      // La fecha viene del backend (día de mañana en España), no del reloj del navegador
+      expect(el().querySelector('mat-card-subtitle')?.textContent).toContain('10 octubre 2026');
+      expect(el().querySelector('.temp-value')?.textContent).toContain('21,5');
       expect(el().querySelector('.temp-unit')?.textContent).toContain('°C');
 
       const items = el().querySelectorAll('.prob-item');
@@ -151,18 +206,20 @@ describe('WeatherComponent', () => {
       expect(items[1].textContent).toContain('12-24');
     });
 
+    it('debería elegir el icono según la probabilidad de lluvia', () => {
+      mockStore.selectedMunicipio.set(agost);
+      mockStore.prediction.set(prediction);
+      fixture.detectChanges();
+
+      expect(el().querySelector('.weather-icon')?.textContent?.trim()).toBe('rainy');
+    });
+
     it('debería mostrar °F cuando la unidad de la predicción es G_FAH', () => {
       mockStore.selectedMunicipio.set(agost);
-      mockStore.prediction.set({ ...prediction, unidadTemperatura: 'G_FAH', mediaTemperatura: 70 });
+      mockStore.prediction.set({ ...prediction, unidadTemperatura: 'G_FAH', mediaTemperatura: 70.7 });
       fixture.detectChanges();
 
       expect(el().querySelector('.temp-unit')?.textContent).toContain('°F');
     });
-  });
-
-  it('debería cerrar la sesión al pulsar el botón de logout', () => {
-    (el().querySelector('button[aria-label="Cerrar sesión"]') as HTMLButtonElement).click();
-
-    expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
   });
 });

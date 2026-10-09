@@ -20,6 +20,28 @@
   .logout-button {
     margin-top: 0.5rem;
   }
+
+  .search-spinner {
+    margin-right: 12px;
+  }
+}
+
+.error-message {
+  color: var(--mat-sys-error);
+  margin: 0 0 1rem;
+}
+
+.empty-state {
+  color: #888;
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.precipitation-title {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #555;
+  margin: 0 0 0.5rem;
 }
 
 .spinner-container {

@@ -1,6 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { Component, computed, inject } from '@angular/core';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { filter } from 'rxjs';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
@@ -13,45 +14,51 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { WeatherStore } from '../../stores/weather.store';
 import { AuthService } from '../../services/auth.service';
 import { Municipio } from '../../interfaces/models/municipio';
+import { TemperatureUnit } from '../../interfaces/models/temperature-unit';
+import { weatherIconFor } from '../../utils/weather-icon';
 
 @Component({
   selector: 'app-weather',
-  standalone: true,
   imports: [
-    CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatAutocompleteModule, MatSelectModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MatButtonModule,
-    MatTooltipModule, DatePipe
+    ReactiveFormsModule, DatePipe, DecimalPipe, MatFormFieldModule, MatInputModule, MatAutocompleteModule,
+    MatSelectModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MatButtonModule, MatTooltipModule
   ],
   templateUrl: './weather.component.html',
   styleUrls: ['./weather.component.scss']
 })
-export class WeatherComponent implements OnInit {
-  store = inject(WeatherStore);
+export class WeatherComponent {
+  readonly store = inject(WeatherStore);
   private readonly authService = inject(AuthService);
-  searchControl = new FormControl('');
-  today = new Date();
 
-  ngOnInit() {
-    this.searchControl.valueChanges.subscribe(value => {
-      if (typeof value === 'string') {
-        this.store.searchMunicipalities(value);
-      }
-    });
+  // Si se recuperó la última selección, el campo arranca mostrando ese municipio
+  readonly searchControl = new FormControl<string | Municipio>(this.store.selectedMunicipio() ?? '', { nonNullable: true });
+
+  readonly weatherIcon = computed(() => {
+    const prediction = this.store.prediction();
+    return prediction ? weatherIconFor(prediction) : null;
+  });
+
+  constructor() {
+    // Al elegir una opción el control recibe el objeto Municipio: solo el texto escrito dispara búsquedas.
+    // rxMethod se desuscribe solo cuando se destruye el componente
+    this.store.searchMunicipalities(
+      this.searchControl.valueChanges.pipe(filter((value): value is string => typeof value === 'string'))
+    );
   }
 
-  displayFn(municipio: Municipio): string {
-    return municipio && municipio.nombre ? municipio.nombre : '';
+  displayMunicipio(value: string | Municipio | null): string {
+    return typeof value === 'string' ? value : value?.nombre ?? '';
   }
 
-  onMunicipioSelected(event: MatAutocompleteSelectedEvent) {
-    this.store.setSelectedMunicipio(event.option.value);
+  onMunicipioSelected(event: MatAutocompleteSelectedEvent): void {
+    this.store.setSelectedMunicipio(event.option.value as Municipio);
   }
 
-  logout() {
-    this.authService.logout();
-  }
-
-  onUnitChange(unit: string) {
+  onUnitChange(unit: TemperatureUnit): void {
     this.store.updateUnit(unit);
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }

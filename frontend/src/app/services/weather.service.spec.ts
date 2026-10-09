@@ -40,6 +40,7 @@ describe('WeatherService', () => {
 
   it('debería obtener la predicción del clima pasando la unidad de temperatura', () => {
     const mockPrediction: WeatherPrediction = {
+      fecha: '2026-10-10',
       mediaTemperatura: 59.0,
       unidadTemperatura: 'G_FAH',
       probPrecipitacion: [{ probabilidad: 10, periodo: '00-24' }],
@@ -60,7 +61,7 @@ describe('WeatherService', () => {
 
     const req = httpMock.expectOne('/api/v1/weather/prediction/40001');
     expect(req.request.params.has('unit')).toBe(false);
-    req.flush({ mediaTemperatura: 20, unidadTemperatura: 'G_CEL', probPrecipitacion: [] });
+    req.flush({ fecha: '2026-10-10', mediaTemperatura: 20, unidadTemperatura: 'G_CEL', probPrecipitacion: [] });
   });
 
   it('debería propagar el error HTTP al buscar municipios', () => {

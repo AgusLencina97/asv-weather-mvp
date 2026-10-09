@@ -1,21 +1,29 @@
 <div class="weather-container">
   <div class="controls-row">
     <mat-form-field appearance="outline" class="search-box">
-      <mat-label>Buscar Municipio</mat-label>
+      <mat-label>Buscar municipio</mat-label>
       <input type="text" matInput [formControl]="searchControl" [matAutocomplete]="auto" />
-      <mat-icon matSuffix>search</mat-icon>
+      @if (store.isSearching()) {
+        <mat-spinner matSuffix diameter="20" class="search-spinner" />
+      } @else {
+        <mat-icon matSuffix>search</mat-icon>
+      }
       <mat-autocomplete
         #auto="matAutocomplete"
-        [displayWith]="displayFn"
+        [displayWith]="displayMunicipio"
         (optionSelected)="onMunicipioSelected($event)"
       >
         @for (m of store.municipalities(); track m.codigo) {
           <mat-option [value]="m">{{ m.nombre }}</mat-option>
         }
+        @if (store.noResults()) {
+          <mat-option disabled>No se encontraron municipios</mat-option>
+        }
       </mat-autocomplete>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="unit-box">
+      <mat-label>Unidad</mat-label>
       <mat-select [value]="store.unit()" (selectionChange)="onUnitChange($event.value)">
         <mat-option value="G_CEL">°C</mat-option>
         <mat-option value="G_FAH">°F</mat-option>
@@ -28,39 +36,46 @@
     </button>
   </div>
 
-  @if (store.isLoading()) {
-    <div class="spinner-container">
-      <mat-spinner diameter="40"></mat-spinner>
-    </div>
+  @if (store.searchError(); as message) {
+    <p class="error-message" role="alert">{{ message }}</p>
   }
 
-  @if (store.prediction() && store.selectedMunicipio(); as prediction) {
+  @if (store.isLoadingPrediction()) {
+    <div class="spinner-container">
+      <mat-spinner diameter="40" aria-label="Cargando predicción" />
+    </div>
+  } @else if (store.predictionError(); as message) {
+    <p class="error-message" role="alert">{{ message }}</p>
+  } @else if (store.prediction(); as prediction) {
     <mat-card class="weather-card">
       <mat-card-header>
         <mat-card-title>{{ store.selectedMunicipio()?.nombre }}</mat-card-title>
-        <mat-card-subtitle>{{ today | date: 'EEEE, d MMMM y' }}</mat-card-subtitle>
+        <mat-card-subtitle>{{ prediction.fecha | date: 'EEEE, d MMMM y' }}</mat-card-subtitle>
       </mat-card-header>
 
       <mat-card-content>
         <div class="main-weather">
           <div class="temp-display">
-            <span class="temp-value">{{ store.prediction()?.mediaTemperatura }}</span>
-            <span class="temp-unit"
-              >°{{ store.prediction()?.unidadTemperatura === 'G_FAH' ? 'F' : 'C' }}</span
-            >
+            <span class="temp-value">{{ prediction.mediaTemperatura | number: '1.0-1' }}</span>
+            <span class="temp-unit">°{{ prediction.unidadTemperatura === 'G_FAH' ? 'F' : 'C' }}</span>
           </div>
-          <mat-icon class="weather-icon">wb_cloudy</mat-icon>
+          <mat-icon class="weather-icon" aria-hidden="true">{{ weatherIcon() }}</mat-icon>
         </div>
 
+        <h3 class="precipitation-title">Probabilidad de precipitación</h3>
         <div class="precipitation-grid">
-          @for (prob of store.prediction()?.probPrecipitacion; track prob.periodo) {
+          @for (prob of prediction.probPrecipitacion; track prob.periodo) {
             <div class="prob-item">
               <span class="prob-val">{{ prob.probabilidad }}%</span>
               <span class="prob-time">{{ prob.periodo }}</span>
             </div>
+          } @empty {
+            <span class="prob-time">Sin datos de precipitación</span>
           }
         </div>
       </mat-card-content>
     </mat-card>
+  } @else {
+    <p class="empty-state">Busca un municipio para ver la previsión de mañana.</p>
   }
 </div>

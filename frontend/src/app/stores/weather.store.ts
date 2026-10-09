@@ -1,90 +1,129 @@
-import { inject } from '@angular/core';
-import { patchState, signalStore, withMethods, withState } from '@ngrx/signals';
+import { computed, inject } from '@angular/core';
+import { patchState, signalStore, withComputed, withHooks, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { debounceTime, distinctUntilChanged, pipe, switchMap, tap } from 'rxjs';
+import { EMPTY, debounceTime, distinctUntilChanged, map, pipe, switchMap, tap } from 'rxjs';
 import { tapResponse } from '@ngrx/operators';
 import { WeatherService } from '../services/weather.service';
+import { LastSelectionStorage } from '../services/last-selection.storage';
 import { Municipio } from '../interfaces/models/municipio';
+import { TemperatureUnit } from '../interfaces/models/temperature-unit';
 import { WeatherPrediction } from '../interfaces/models/weather-prediction';
-import { HttpErrorResponse } from '@angular/common/http';
+import { toUserMessage } from '../utils/http-error';
+
+export const MIN_SEARCH_LENGTH = 2;
 
 interface WeatherState {
   municipalities: Municipio[];
+  /** Prefijo de la última búsqueda completada (null si no se ha buscado) */
+  searchedPrefix: string | null;
+  isSearching: boolean;
+  searchError: string | null;
   selectedMunicipio: Municipio | null;
+  /** null = sin elegir: el backend usa grados Celsius por defecto */
+  unit: TemperatureUnit | null;
   prediction: WeatherPrediction | null;
-  unit: string;
-  isLoading: boolean;
+  isLoadingPrediction: boolean;
+  predictionError: string | null;
 }
 
 const initialState: WeatherState = {
   municipalities: [],
+  searchedPrefix: null,
+  isSearching: false,
+  searchError: null,
   selectedMunicipio: null,
+  unit: null,
   prediction: null,
-  unit: 'G_CEL',
-  isLoading: false,
+  isLoadingPrediction: false,
+  predictionError: null,
 };
 
 export const WeatherStore = signalStore(
   { providedIn: 'root' },
   withState(initialState),
-  withMethods((store, weatherService = inject(WeatherService)) => ({
-    
-    updateUnit(unit: string) {
-      patchState(store, { unit });
-      const currentMunicipio = store.selectedMunicipio();
-      if (currentMunicipio) {
-        this.loadPrediction({ id: currentMunicipio.codigo, unit });
-      }
-    },
+  withComputed(({ searchedPrefix, municipalities, isSearching, searchError }) => ({
+    noResults: computed(
+      () => searchedPrefix() !== null && !isSearching() && !searchError() && municipalities().length === 0,
+    ),
+  })),
+  withMethods((store, weatherService = inject(WeatherService), lastSelection = inject(LastSelectionStorage)) => {
+    // switchMap cancela la petición anterior si el usuario cambia de municipio o unidad antes de que responda
+    const loadPrediction = rxMethod<{ municipio: Municipio; unit: TemperatureUnit | null }>(
+      pipe(
+        tap(() => patchState(store, { isLoadingPrediction: true, predictionError: null })),
+        switchMap(({ municipio, unit }) =>
+          weatherService.getPrediction(municipio.codigo, unit).pipe(
+            tapResponse({
+              next: (prediction: WeatherPrediction) => patchState(store, { prediction, isLoadingPrediction: false }),
+              error: (error: unknown) =>
+                patchState(store, {
+                  prediction: null,
+                  isLoadingPrediction: false,
+                  predictionError: toUserMessage(error, 'No se pudo obtener la predicción. Inténtalo de nuevo.'),
+                }),
+            }),
+          ),
+        ),
+      ),
+    );
 
-    setSelectedMunicipio(municipio: Municipio | null) {
-      patchState(store, { selectedMunicipio: municipio });
+    const refreshPrediction = (): void => {
+      const municipio = store.selectedMunicipio();
       if (municipio) {
-        this.loadPrediction({ id: municipio.codigo, unit: store.unit() });
-      } else {
-        patchState(store, { prediction: null });
+        const unit = store.unit();
+        lastSelection.save({ municipio, unit });
+        loadPrediction({ municipio, unit });
+      }
+    };
+
+    return {
+      searchMunicipalities: rxMethod<string>(
+        pipe(
+          debounceTime(300),
+          map((prefix) => prefix.trim()),
+          distinctUntilChanged(),
+          switchMap((prefix) => {
+            if (prefix.length < MIN_SEARCH_LENGTH) {
+              patchState(store, { municipalities: [], searchedPrefix: null, isSearching: false, searchError: null });
+              return EMPTY;
+            }
+            patchState(store, { isSearching: true, searchError: null });
+            return weatherService.searchMunicipalities(prefix).pipe(
+              tapResponse({
+                next: (municipalities: Municipio[]) =>
+                  patchState(store, { municipalities, searchedPrefix: prefix, isSearching: false }),
+                error: (error: unknown) =>
+                  patchState(store, {
+                    municipalities: [],
+                    searchedPrefix: prefix,
+                    isSearching: false,
+                    searchError: toUserMessage(error, 'No se pudieron buscar municipios. Inténtalo de nuevo.'),
+                  }),
+              }),
+            );
+          }),
+        ),
+      ),
+
+      setSelectedMunicipio(municipio: Municipio): void {
+        patchState(store, { selectedMunicipio: municipio });
+        refreshPrediction();
+      },
+
+      updateUnit(unit: TemperatureUnit): void {
+        patchState(store, { unit });
+        refreshPrediction();
+      },
+    };
+  }),
+  withHooks((store, lastSelection = inject(LastSelectionStorage)) => ({
+    // Al abrir la app se recupera la última selección y se carga su predicción automáticamente
+    onInit(): void {
+      const saved = lastSelection.load();
+      if (saved) {
+        patchState(store, { unit: saved.unit });
+        store.setSelectedMunicipio(saved.municipio);
       }
     },
-
-    searchMunicipalities: rxMethod<string>(
-      pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        tap(() => patchState(store, { isLoading: true })),
-        switchMap((prefix) => {
-          if (!prefix || prefix.length < 2) {
-            patchState(store, { municipalities: [], isLoading: false });
-            return [];
-          }
-          return weatherService.searchMunicipalities(prefix).pipe(
-            // Tipado explícito para evitar el error 'implicit any'
-            tapResponse<Municipio[], HttpErrorResponse>({
-              next: (municipalities) => patchState(store, { municipalities, isLoading: false }),
-              error: (err) => {
-                console.error(err);
-                patchState(store, { municipalities: [], isLoading: false });
-              },
-            })
-          );
-        })
-      )
-    ),
-
-    loadPrediction: rxMethod<{ id: string; unit: string }>(
-      pipe(
-        tap(() => patchState(store, { isLoading: true })),
-        switchMap(({ id, unit }) =>
-          weatherService.getPrediction(id, unit).pipe(
-            tapResponse<WeatherPrediction, HttpErrorResponse>({
-              next: (prediction) => patchState(store, { prediction, isLoading: false }),
-              error: (err) => {
-                console.error(err);
-                patchState(store, { prediction: null, isLoading: false });
-              },
-            })
-          )
-        )
-      )
-    ),
-  }))
+  })),
 );
