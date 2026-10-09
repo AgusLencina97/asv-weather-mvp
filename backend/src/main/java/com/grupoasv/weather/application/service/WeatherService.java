@@ -51,7 +51,7 @@ public class WeatherService implements FindMunicipalitiesUseCase, GetNextDayPred
         DailyForecast forecast = weatherExternalPort.fetchDailyForecast(municipioId, tomorrow);
         double temperature = roundToOneDecimal(finalUnit.fromCelsius(forecast.temperaturaMediaCelsius()));
 
-        return new WeatherPrediction(temperature, finalUnit, forecast.probPrecipitacion());
+        return new WeatherPrediction(forecast.fecha(), temperature, finalUnit, forecast.probPrecipitacion());
     }
 
     /** Busca por el nombre tal cual y también por su forma natural ("A Coruña" encuentra "Coruña, A"). */

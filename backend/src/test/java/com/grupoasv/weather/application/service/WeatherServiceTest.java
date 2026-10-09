@@ -117,6 +117,7 @@ class WeatherServiceTest {
         WeatherPrediction result = weatherService.getPrediction("03002", null);
 
         // Assert
+        assertEquals(TOMORROW, result.fecha());
         assertEquals(TemperatureUnit.G_CEL, result.unidadTemperatura());
         assertEquals(18.5, result.mediaTemperatura());
         assertEquals(2, result.probPrecipitacion().size());

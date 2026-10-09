@@ -21,6 +21,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.hamcrest.Matchers.not;
@@ -77,10 +78,11 @@ class WeatherControllerTest {
     @DisplayName("GET prediction - should return the contract defined in the specification")
     void getPrediction_ShouldReturnExpectedContract() throws Exception {
         when(getNextDayPredictionUseCase.getPrediction("03002", TemperatureUnit.G_FAH)).thenReturn(
-                new WeatherPrediction(66.7, TemperatureUnit.G_FAH, List.of(new PrecipitationProbability(5, "00-06"))));
+                new WeatherPrediction(LocalDate.of(2026, 10, 10), 66.7, TemperatureUnit.G_FAH, List.of(new PrecipitationProbability(5, "00-06"))));
 
         mockMvc.perform(get(BASE_URL + "/prediction/03002").param("unit", "G_FAH"))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.fecha").value("2026-10-10"))
                 .andExpect(jsonPath("$.mediaTemperatura").value(66.7))
                 .andExpect(jsonPath("$.unidadTemperatura").value("G_FAH"))
                 .andExpect(jsonPath("$.probPrecipitacion[0].probabilidad").value(5))
