@@ -5,6 +5,7 @@ import com.grupoasv.weather.domain.exception.WeatherDomainException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -21,6 +22,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ProblemDetail handleNotFound(ResourceNotFoundException ex) {
         return problem(HttpStatus.NOT_FOUND, "Recurso no encontrado", ex.getMessage());
+    }
+
+    @ExceptionHandler(AuthenticationException.class)
+    public ProblemDetail handleAuthentication(AuthenticationException ex) {
+        // Mismo mensaje para usuario inexistente y contraseña incorrecta: no revela qué usuarios existen
+        log.warn("Intento de login fallido: {}", ex.getMessage());
+        return problem(HttpStatus.UNAUTHORIZED, "No autenticado", "Usuario o contraseña incorrectos");
     }
 
     @ExceptionHandler(WeatherDomainException.class)

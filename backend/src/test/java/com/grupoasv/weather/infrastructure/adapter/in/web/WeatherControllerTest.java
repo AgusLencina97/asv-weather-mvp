@@ -8,6 +8,7 @@ import com.grupoasv.weather.domain.model.TemperatureUnit;
 import com.grupoasv.weather.domain.model.WeatherPrediction;
 import com.grupoasv.weather.domain.port.in.FindMunicipalitiesUseCase;
 import com.grupoasv.weather.domain.port.in.GetNextDayPredictionUseCase;
+import com.grupoasv.weather.infrastructure.config.JwtConfig;
 import com.grupoasv.weather.infrastructure.config.SecurityConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,8 +37,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * con los casos de uso simulados.
  */
 @WebMvcTest(WeatherController.class)
-@Import(SecurityConfig.class)
-@TestPropertySource(properties = {"api.security.username=test-user", "api.security.password=test-password"})
+@Import({SecurityConfig.class, JwtConfig.class})
+@TestPropertySource(locations = "classpath:test-secrets.properties")
 @WithMockUser
 class WeatherControllerTest {
 
