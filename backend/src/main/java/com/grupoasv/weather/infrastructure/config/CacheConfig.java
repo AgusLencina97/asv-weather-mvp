@@ -10,10 +10,6 @@ import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 
-/**
- * Cada caché tiene su propia caducidad: el listado de municipios casi no cambia,
- * mientras que AEMET actualiza las predicciones varias veces al día.
- */
 @Configuration
 @EnableCaching
 public class CacheConfig {

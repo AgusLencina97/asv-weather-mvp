@@ -6,10 +6,7 @@ import com.grupoasv.weather.domain.model.WeatherPrediction;
 import java.time.LocalDate;
 import java.util.List;
 
-/**
- * Contrato público de la API para la predicción del día siguiente. Respecto al enunciado se añade "fecha"
- * (día al que corresponde la predicción) para que el cliente no tenga que calcularlo con su propio reloj.
- */
+// "fecha" no está en el enunciado: evita que el cliente deduzca el día con su propio reloj
 public record PredictionResponse(
         LocalDate fecha,
         Double mediaTemperatura,

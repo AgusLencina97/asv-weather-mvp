@@ -28,10 +28,9 @@ public class AuthController {
     private final JwtTokenService jwtTokenService;
 
     @PostMapping("/login")
-    @SecurityRequirements // Endpoint público: no requiere token
+    @SecurityRequirements // Público en Swagger: no requiere token
     @Operation(summary = "Valida las credenciales y devuelve un JWT de acceso")
     public TokenResponse login(@Valid @RequestBody LoginRequest request) {
-        // Si las credenciales no son válidas lanza AuthenticationException -> 401 (GlobalExceptionHandler)
         Authentication authentication = authenticationManager.authenticate(
                 UsernamePasswordAuthenticationToken.unauthenticated(request.username(), request.password()));
         log.info("Login correcto para el usuario '{}'", authentication.getName());

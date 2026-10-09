@@ -45,17 +45,14 @@ class AemetWeatherAdapterTest {
 
     @BeforeEach
     void setUp() {
-        // Usamos un JsonMapper real para probar el parseo JSON real
         adapter = new AemetWeatherAdapter(feignClient, JsonMapper.builder().build());
 
-        // Inyectamos la API key simulada (como lo haría @Value en ejecución)
         ReflectionTestUtils.setField(adapter, "apiKey", "test-key");
     }
 
     @Test
     @DisplayName("Fetch all municipalities - should parse and clean IDs correctly")
     void fetchAllMunicipalities_ShouldParseAndCleanIdsCorrectly() {
-        // Arrange: Simulamos la respuesta en dos pasos de AEMET
         String rawJsonData = """
                 [
                   {"id": "id03002", "nombre": "Agost"},
@@ -67,20 +64,16 @@ class AemetWeatherAdapterTest {
         when(feignClient.getMunicipiosUrl("test-key")).thenReturn(RESPUESTA_OK);
         when(feignClient.getDataFromUrl(URI.create(DATOS_URL))).thenReturn(rawJsonData);
 
-        // Act
         List<Municipio> result = adapter.fetchAllMunicipalities();
 
-        // Assert: quita el prefijo "id" e ignora los nodos incompletos
         assertEquals(List.of(new Municipio("03002", "Agost"), new Municipio("40001", "Abades")), result);
     }
 
     @Test
     @DisplayName("Fetch all municipalities - should throw DomainException on Feign error")
     void fetchAllMunicipalities_ShouldThrowDomainExceptionOnFeignError() {
-        // Arrange: Simulamos una caída de la API
         when(feignClient.getMunicipiosUrl(anyString())).thenThrow(feignException(429));
 
-        // Act & Assert
         WeatherDomainException exception = assertThrows(WeatherDomainException.class,
                 () -> adapter.fetchAllMunicipalities());
 
@@ -100,14 +93,12 @@ class AemetWeatherAdapterTest {
     @Test
     @DisplayName("Fetch daily forecast - should pick the requested date and keep only 6-hour periods")
     void fetchDailyForecast_ShouldPickRequestedDateAndKeepOnlySixHourPeriods() throws IOException {
-        // Arrange: el fixture tiene hoy (08), mañana (09) y pasado (10) con la estructura real de AEMET
+        // El fixture tiene los días 08 (hoy), 09 (mañana) y 10, con la estructura real de AEMET
         when(feignClient.getPrediccionUrl("03002", "test-key")).thenReturn(RESPUESTA_OK);
         when(feignClient.getDataFromUrl(URI.create(DATOS_URL))).thenReturn(fixture("aemet/prediccion-diaria.json"));
 
-        // Act
         DailyForecast result = adapter.fetchDailyForecast("03002", LocalDate.of(2026, 10, 9));
 
-        // Assert: temperaturas del día 09 en Celsius, sin tramos de 24h/12h ni valores vacíos
         assertEquals(24.0, result.temperaturaMaximaCelsius());
         assertEquals(13.0, result.temperaturaMinimaCelsius());
         assertEquals(List.of(

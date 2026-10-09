@@ -19,7 +19,7 @@ interface WeatherState {
   isSearching: boolean;
   searchError: string | null;
   selectedMunicipio: Municipio | null;
-  /** null = sin elegir: el backend usa grados Celsius por defecto */
+  /** null = sin elegir (el backend aplica G_CEL) */
   unit: TemperatureUnit | null;
   prediction: WeatherPrediction | null;
   isLoadingPrediction: boolean;
@@ -47,7 +47,6 @@ export const WeatherStore = signalStore(
     ),
   })),
   withMethods((store, weatherService = inject(WeatherService), lastSelection = inject(LastSelectionStorage)) => {
-    // switchMap cancela la petición anterior si el usuario cambia de municipio o unidad antes de que responda
     const loadPrediction = rxMethod<{ municipio: Municipio; unit: TemperatureUnit | null }>(
       pipe(
         tap(() => patchState(store, { isLoadingPrediction: true, predictionError: null })),
@@ -117,7 +116,6 @@ export const WeatherStore = signalStore(
     };
   }),
   withHooks((store, lastSelection = inject(LastSelectionStorage)) => ({
-    // Al abrir la app se recupera la última selección y se carga su predicción automáticamente
     onInit(): void {
       const saved = lastSelection.load();
       if (saved) {

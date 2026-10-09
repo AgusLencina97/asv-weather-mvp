@@ -38,10 +38,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Prueba la cadena de seguridad completa (login, emisión y validación del JWT, CORS) con la aplicación real.
- * Solo se simula el puerto de salida hacia AEMET.
- */
 @SpringBootTest
 @AutoConfigureMockMvc
 @TestPropertySource(locations = "classpath:test-secrets.properties")

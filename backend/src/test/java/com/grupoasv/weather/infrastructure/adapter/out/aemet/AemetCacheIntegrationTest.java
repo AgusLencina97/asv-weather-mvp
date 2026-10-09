@@ -26,10 +26,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-/**
- * Comprueba la caché real (Caffeine + proxy de Spring) delante del adaptador: el objetivo es
- * llamar a AEMET lo menos posible para no superar su límite de uso.
- */
 @SpringBootTest
 @TestPropertySource(locations = "classpath:test-secrets.properties")
 class AemetCacheIntegrationTest {

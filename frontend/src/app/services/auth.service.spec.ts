@@ -18,7 +18,6 @@ describe('AuthService', () => {
 
   beforeEach(() => {
     sessionStorage.clear();
-    // Espiamos el enrutador para verificar las redirecciones sin ejecutarlas realmente
     routerSpy = { navigate: vi.fn() };
 
     TestBed.configureTestingModule({

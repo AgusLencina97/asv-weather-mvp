@@ -8,11 +8,7 @@ import { TokenResponse } from '../interfaces/models/token-response';
 const TOKEN_KEY = 'accessToken';
 const EXPIRES_AT_KEY = 'accessTokenExpiresAt';
 
-/**
- * Gestiona el JWT de acceso. Se guarda en sessionStorage: sobrevive a recargar la página
- * pero se borra al cerrar la pestaña. En producción, la opción más robusta frente a XSS sería
- * una cookie HttpOnly emitida por el backend.
- */
+// sessionStorage: se borra al cerrar la pestaña. En producción, una cookie HttpOnly sería más robusta frente a XSS
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
@@ -34,7 +30,6 @@ export class AuthService {
     return this.getToken() !== null;
   }
 
-  /** Devuelve el token solo si sigue vigente; si ya caducó lo descarta. */
   getToken(): string | null {
     const token = sessionStorage.getItem(TOKEN_KEY);
     const expiresAt = Number(sessionStorage.getItem(EXPIRES_AT_KEY));

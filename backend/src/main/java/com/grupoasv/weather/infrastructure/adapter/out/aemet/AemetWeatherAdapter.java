@@ -25,10 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * Adaptador de salida hacia AEMET OpenData. Traduce el formato de AEMET al modelo de dominio
- * (capa anticorrupción) y no contiene reglas de negocio: devuelve siempre grados Celsius.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -36,8 +32,8 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
 
     private static final int ESTADO_OK = 200;
     private static final int ESTADO_NOT_FOUND = 404;
-    // AEMET mezcla tramos solapados de 24, 12 y 6 horas, y no todos los días los traen todos
-    // (justo después de medianoche "mañana" solo tiene tramos de 12h). Se usa el más fino disponible.
+    // AEMET mezcla tramos solapados de 24, 12 y 6 h y no todos los días los traen todos
+    // (justo después de medianoche, "mañana" solo tiene tramos de 12 h): se usa el más fino disponible
     private static final List<Set<String>> GRANULARIDADES = List.of(
             Set.of("00-06", "06-12", "12-18", "18-24"),
             Set.of("00-12", "12-24"),
@@ -49,7 +45,6 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
     @Value("${aemet.api.key}")
     private String apiKey;
 
-    // Una key vacía (p. ej. .env copiado sin rellenar) se detecta al arrancar, no en la primera búsqueda
     @PostConstruct
     void validateApiKey() {
         if (apiKey == null || apiKey.isBlank()) {
@@ -58,14 +53,13 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
     }
 
     @Override
-    // sync = true: si varias peticiones encuentran la caché vacía a la vez, solo una llama a AEMET y el resto espera su resultado
-    @Cacheable(value = CacheConfig.MUNICIPIOS, sync = true) // El listado es lento y casi nunca cambia
+    // sync = true: con la caché vacía y peticiones simultáneas, solo una llama a AEMET
+    @Cacheable(value = CacheConfig.MUNICIPIOS, sync = true)
     public List<Municipio> fetchAllMunicipalities() {
         JsonNode root = fetchDatos(() -> feignClient.getMunicipiosUrl(apiKey), "el listado de municipios");
 
         List<Municipio> municipios = new ArrayList<>();
         for (JsonNode node : root) {
-            // Parseo defensivo: solo procesa si el nodo realmente tiene "id" y "nombre"
             if (node.hasNonNull("id") && node.hasNonNull("nombre")) {
                 String cleanId = node.get("id").asString().replaceFirst("^id", "");
                 municipios.add(new Municipio(cleanId, node.get("nombre").asString()));
@@ -75,7 +69,7 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
     }
 
     @Override
-    @Cacheable(value = CacheConfig.PREDICCIONES, sync = true) // Clave = municipio + fecha: no depende de la unidad y caduca sola al cambiar de día
+    @Cacheable(value = CacheConfig.PREDICCIONES, sync = true) // Clave: municipio + fecha, independiente de la unidad
     public DailyForecast fetchDailyForecast(String municipioId, LocalDate fecha) {
         JsonNode root = fetchDatos(() -> feignClient.getPrediccionUrl(municipioId, apiKey),
                 "la predicción del municipio " + municipioId);
@@ -92,10 +86,7 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
         return new DailyForecast(fecha, maxima.asDouble(), minima.asDouble(), probs);
     }
 
-    /**
-     * AEMET responde en dos pasos: la primera llamada devuelve un "estado" y una URL temporal ("datos")
-     * donde descargar el contenido real. Este método resuelve ambos pasos y traduce los errores al dominio.
-     */
+    // AEMET responde en dos pasos: un "estado" y una URL ("datos") con el contenido real
     private JsonNode fetchDatos(Supplier<AemetResponseWrapper> peticion, String recurso) {
         try {
             AemetResponseWrapper respuesta = peticion.get();
@@ -108,7 +99,6 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
             }
             return jsonMapper.readTree(feignClient.getDataFromUrl(URI.create(respuesta.datos())));
         } catch (FeignException | JacksonException e) {
-            // El detalle técnico se queda en el log; al cliente solo le llega un mensaje genérico
             log.error("Error al obtener {} de AEMET: {}", recurso, e.getMessage(), e);
             throw new WeatherDomainException("Error obteniendo " + recurso + " de AEMET", e);
         }
@@ -135,7 +125,7 @@ public class AemetWeatherAdapter implements WeatherExternalPort {
 
     private JsonNode findDay(JsonNode root, LocalDate fecha, String municipioId) {
         for (JsonNode dia : root.path(0).path("prediccion").path("dia")) {
-            // Se busca por fecha y no por posición: el primer día del array no siempre es "hoy"
+            // Por fecha y no por posición: el fichero empieza el día en que se elaboró, no siempre hoy
             if (dia.path("fecha").asString("").startsWith(fecha.toString())) {
                 return dia;
             }

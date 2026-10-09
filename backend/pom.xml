@@ -76,7 +76,7 @@
 			<version>${springdoc.version}</version>
 		</dependency>
 
-		<!-- Caffeine Cache (Implementación robusta de caché) -->
+		<!-- Caffeine -->
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
 			<artifactId>caffeine</artifactId>

@@ -25,11 +25,11 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class WeatherService implements FindMunicipalitiesUseCase, GetNextDayPredictionUseCase {
 
-    // AEMET publica algunos nombres con el artículo al final: "Coruña, A", "Rozas de Madrid, Las", "Alqueria de la Comtessa, l'"
+    // AEMET publica algunos nombres con el artículo al final: "Coruña, A", "Rozas de Madrid, Las"
     private static final Pattern ARTICULO_POSPUESTO = Pattern.compile("^(.+), (\\S+)$");
 
     private final WeatherExternalPort weatherExternalPort;
-    // Reloj inyectado (zona Europe/Madrid) para que "mañana" sea el de España y los tests sean deterministas
+    // Zona Europe/Madrid: "mañana" es el de España, no el del servidor
     private final Clock clock;
 
     @Override
@@ -54,7 +54,6 @@ public class WeatherService implements FindMunicipalitiesUseCase, GetNextDayPred
         return new WeatherPrediction(forecast.fecha(), temperature, finalUnit, forecast.probPrecipitacion());
     }
 
-    /** Busca por el nombre tal cual y también por su forma natural ("A Coruña" encuentra "Coruña, A"). */
     private static boolean matchesPrefix(String nombre, String normalizedPrefix) {
         String normalizedName = normalize(nombre);
         if (normalizedName.startsWith(normalizedPrefix)) {
@@ -69,7 +68,7 @@ public class WeatherService implements FindMunicipalitiesUseCase, GetNextDayPred
         return false;
     }
 
-    /** Minúsculas y sin tildes ni diéresis: "Alcalá" y "alcala" se consideran iguales. */
+    // "Alcalá" -> "alcala"
     private static String normalize(String text) {
         return Normalizer.normalize(text.trim(), Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")

@@ -9,11 +9,6 @@ export interface LastSelection {
 
 const STORAGE_KEY = 'asv-weather.last-selection';
 
-/**
- * Recuerda el último municipio y unidad elegidos en este navegador (localStorage), para cargar
- * la predicción automáticamente al volver. No es información sensible. Para recordarlo entre
- * dispositivos, se cambiaría esta clase por una que guarde la preferencia en el backend.
- */
 @Injectable({ providedIn: 'root' })
 export class LastSelectionStorage {
   load(): LastSelection | null {
@@ -31,7 +26,7 @@ export class LastSelectionStorage {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(selection));
     } catch {
-      // Recordar la selección es una mejora opcional: si el storage falla, la app sigue funcionando
+      // Recordar la selección es opcional: si el storage falla, la app sigue funcionando
     }
   }
 }

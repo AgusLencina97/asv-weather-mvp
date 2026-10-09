@@ -195,7 +195,6 @@ describe('WeatherComponent', () => {
       fixture.detectChanges();
 
       expect(el().querySelector('mat-card-title')?.textContent).toContain('Agost');
-      // La fecha viene del backend (día de mañana en España), no del reloj del navegador
       expect(el().querySelector('mat-card-subtitle')?.textContent).toContain('10 octubre 2026');
       expect(el().querySelector('.temp-value')?.textContent).toContain('21,5');
       expect(el().querySelector('.temp-unit')?.textContent).toContain('°C');

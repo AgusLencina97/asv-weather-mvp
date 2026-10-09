@@ -15,11 +15,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
-/**
- * Firma y validación de JWT con una clave simétrica (HS256). Para un único backend que emite y valida
- * sus propios tokens es suficiente; con varios servicios o un proveedor de identidad (Keycloak, Auth0...)
- * se usaría una clave asimétrica (RS256) publicada como JWKS y este backend solo validaría.
- */
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
 public class JwtConfig {
@@ -46,7 +41,6 @@ public class JwtConfig {
         NimbusJwtDecoder decoder = NimbusJwtDecoder.withSecretKey(jwtSecretKey)
                 .macAlgorithm(MacAlgorithm.HS256)
                 .build();
-        // Además de la firma, valida la caducidad (exp/nbf) y que el emisor sea este backend
         decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer(properties.issuer()));
         return decoder;
     }

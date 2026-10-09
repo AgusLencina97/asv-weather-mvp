@@ -9,14 +9,14 @@ import java.net.URI;
 @FeignClient(name = "aemetClient", url = "https://opendata.aemet.es/opendata/api")
 public interface AemetFeignClient {
 
-    // La API key viaja en cabecera y no en la URL: así no queda registrada en logs, trazas ni mensajes de error
+    // La API key va en cabecera y no en la URL, para que no quede registrada en logs ni en mensajes de error
     @GetMapping("/maestro/municipios")
     AemetResponseWrapper getMunicipiosUrl(@RequestHeader("api_key") String apiKey);
 
     @GetMapping("/prediccion/especifica/municipio/diaria/{id}")
     AemetResponseWrapper getPrediccionUrl(@PathVariable("id") String municipioId, @RequestHeader("api_key") String apiKey);
 
-    // Feign permite pasar una URI dinámica para resolver el segundo paso de AEMET
+    // Segundo paso de AEMET: descarga desde la URL "datos"
     @GetMapping
     String getDataFromUrl(URI baseUrl);
 }

@@ -43,7 +43,6 @@ class WeatherServiceTest {
     @Test
     @DisplayName("Find by name prefix - should return filtered and case insensitive list")
     void findByNamePrefix_ShouldReturnFilteredAndCaseInsensitiveList() {
-        // Arrange: Simulamos lo que devolvería AEMET
         when(weatherExternalPort.fetchAllMunicipalities()).thenReturn(List.of(
                 new Municipio("03002", "Agost"),
                 new Municipio("03003", "Agres"),
@@ -51,10 +50,8 @@ class WeatherServiceTest {
                 new Municipio("35001", "Agaete")
         ));
 
-        // Act: Probamos nuestro caso de uso en minúsculas para verificar el ignore-case
         List<Municipio> result = weatherService.findByNamePrefix("ag");
 
-        // Assert: Verificamos que filtra correctamente y ordena alfabéticamente
         assertEquals(List.of("Agaete", "Agost", "Agres"), result.stream().map(Municipio::nombre).toList());
         verify(weatherExternalPort, times(1)).fetchAllMunicipalities();
     }
@@ -91,16 +88,13 @@ class WeatherServiceTest {
     @Test
     @DisplayName("Find by name prefix - should return empty list when no match")
     void findByNamePrefix_ShouldReturnEmptyListWhenNoMatch() {
-        // Arrange
         when(weatherExternalPort.fetchAllMunicipalities()).thenReturn(List.of(
                 new Municipio("03002", "Agost"),
                 new Municipio("40001", "Abades")
         ));
 
-        // Act
         List<Municipio> result = weatherService.findByNamePrefix("Madrid");
 
-        // Assert
         assertNotNull(result);
         assertTrue(result.isEmpty());
         verify(weatherExternalPort, times(1)).fetchAllMunicipalities();
@@ -109,14 +103,12 @@ class WeatherServiceTest {
     @Test
     @DisplayName("Get prediction - should use Celsius as default and ask for tomorrow's forecast")
     void getPrediction_ShouldUseCelsiusAsDefaultAndAskForTomorrow() {
-        // Arrange: máxima 24 y mínima 13 -> media 18.5 ºC
+        // Máxima 24 y mínima 13 -> media 18.5 ºC
         when(weatherExternalPort.fetchDailyForecast("03002", TOMORROW))
                 .thenReturn(forecast(24, 13));
 
-        // Act: Pasamos null para verificar el uso de Celsius como default
         WeatherPrediction result = weatherService.getPrediction("03002", null);
 
-        // Assert
         assertEquals(TOMORROW, result.fecha());
         assertEquals(TemperatureUnit.G_CEL, result.unidadTemperatura());
         assertEquals(18.5, result.mediaTemperatura());

@@ -10,11 +10,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-/**
- * Traduce excepciones a respuestas HTTP con formato estándar RFC 9457 (ProblemDetail).
- * La clase base ya resuelve los errores de petición de Spring MVC (parámetros que faltan,
- * tipos inválidos, validaciones) como 400.
- */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -33,7 +28,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(WeatherDomainException.class)
     public ProblemDetail handleExternalServiceError(WeatherDomainException ex) {
-        // No se expone ex.getMessage(): el detalle técnico ya está en el log
         return problem(HttpStatus.BAD_GATEWAY, "Error en el servicio de AEMET",
                 "No se pudo obtener la información de AEMET. Inténtalo de nuevo en unos minutos.");
     }

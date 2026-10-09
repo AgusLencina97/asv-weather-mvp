@@ -30,7 +30,7 @@ export class WeatherComponent {
   readonly store = inject(WeatherStore);
   private readonly authService = inject(AuthService);
 
-  // Si se recuperó la última selección, el campo arranca mostrando ese municipio
+  // Si se restauró la última selección, el campo arranca mostrando ese municipio
   readonly searchControl = new FormControl<string | Municipio>(this.store.selectedMunicipio() ?? '', { nonNullable: true });
 
   readonly weatherIcon = computed(() => {
@@ -39,8 +39,7 @@ export class WeatherComponent {
   });
 
   constructor() {
-    // Al elegir una opción el control recibe el objeto Municipio: solo el texto escrito dispara búsquedas.
-    // rxMethod se desuscribe solo cuando se destruye el componente
+    // Al elegir una opción el valor es un Municipio: solo el texto escrito dispara búsquedas
     this.store.searchMunicipalities(
       this.searchControl.valueChanges.pipe(filter((value): value is string => typeof value === 'string'))
     );

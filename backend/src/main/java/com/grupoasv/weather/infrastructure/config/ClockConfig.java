@@ -10,10 +10,7 @@ import java.time.ZoneId;
 @Configuration
 public class ClockConfig {
 
-    /**
-     * "Mañana" se calcula en la zona horaria de AEMET (España), no en la del servidor:
-     * un servidor en UTC o en otra región cambiaría de día a una hora distinta.
-     */
+    // "Mañana" se calcula en la zona horaria de AEMET (España), no en la del servidor
     @Bean
     public Clock clock(@Value("${weather.time-zone}") ZoneId zoneId) {
         return Clock.system(zoneId);

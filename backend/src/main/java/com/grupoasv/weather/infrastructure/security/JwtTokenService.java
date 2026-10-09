@@ -14,7 +14,6 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
-/** Emite el JWT de acceso de un usuario ya autenticado. */
 @Component
 @RequiredArgsConstructor
 public class JwtTokenService {

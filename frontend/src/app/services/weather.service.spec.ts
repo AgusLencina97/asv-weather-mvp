@@ -18,7 +18,6 @@ describe('WeatherService', () => {
   });
 
   afterEach(() => {
-    // Asegura que no queden peticiones HTTP pendientes en el aire después de cada test
     httpMock.verify();
   });
 

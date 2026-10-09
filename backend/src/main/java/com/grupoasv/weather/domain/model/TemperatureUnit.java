@@ -1,9 +1,5 @@
 package com.grupoasv.weather.domain.model;
 
-/**
- * Unidades de temperatura soportadas. AEMET siempre entrega grados Celsius,
- * por lo que cada unidad sabe convertir desde Celsius (regla de negocio del dominio).
- */
 public enum TemperatureUnit {
     G_CEL {
         @Override

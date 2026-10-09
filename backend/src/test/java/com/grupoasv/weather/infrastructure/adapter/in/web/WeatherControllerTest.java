@@ -33,10 +33,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * Test de la capa web aislada: controlador, validaciones, manejo de errores y seguridad,
- * con los casos de uso simulados.
- */
 @WebMvcTest(WeatherController.class)
 @Import({SecurityConfig.class, JwtConfig.class})
 @TestPropertySource(locations = "classpath:test-secrets.properties")

@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityScheme;
 import org.springframework.context.annotation.Configuration;
 
-/** Añade el botón "Authorize" en Swagger UI para probar la API con el token del login. */
 @Configuration
 @OpenAPIDefinition(
         info = @Info(title = "ASV Weather API", version = "v1",

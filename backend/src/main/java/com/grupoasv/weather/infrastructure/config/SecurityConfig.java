@@ -26,10 +26,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-/**
- * API stateless protegida con JWT: el login devuelve un token firmado y el resto de endpoints
- * lo validan en cada petición con el soporte de "resource server" de Spring Security.
- */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -49,7 +45,6 @@ public class SecurityConfig {
                         .requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .anyRequest().authenticated()
                 )
-                // Valida la cabecera "Authorization: Bearer <jwt>" con el JwtDecoder de JwtConfig
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
         return http.build();
     }
@@ -59,7 +54,7 @@ public class SecurityConfig {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
 
-    // MVP con un único usuario configurable. En producción vendría de una base de datos o de un proveedor de identidad
+    // MVP con un único usuario configurable; en producción, base de datos o proveedor de identidad
     @Bean
     public UserDetailsService userDetailsService(
             @Value("${api.security.username}") String username,

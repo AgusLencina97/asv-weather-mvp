@@ -1,9 +1,6 @@
 import { HttpErrorResponse } from '@angular/common/http';
 
-/**
- * Traduce un error HTTP a un mensaje para el usuario. El backend responde con ProblemDetail (RFC 9457),
- * cuyo campo "detail" ya es un texto apto para mostrar.
- */
+// El backend responde con ProblemDetail (RFC 9457): su "detail" ya es apto para mostrar
 export function toUserMessage(error: unknown, fallback: string): string {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 0) {
