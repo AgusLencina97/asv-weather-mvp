@@ -4,6 +4,7 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { vi } from 'vitest';
 import { WeatherComponent } from './weather.component';
 import { WeatherStore } from '../../stores/weather.store';
+import { AuthService } from '../../services/auth.service';
 import { Municipio } from '../../interfaces/models/municipio';
 import { WeatherPrediction } from '../../interfaces/models/weather-prediction';
 
@@ -21,6 +22,8 @@ describe('WeatherComponent', () => {
     updateUnit: ReturnType<typeof vi.fn>;
   };
 
+  let mockAuthService: { logout: ReturnType<typeof vi.fn> };
+
   const agost: Municipio = { codigo: '03002', nombre: 'Agost' };
   const el = () => fixture.nativeElement as HTMLElement;
 
@@ -36,9 +39,14 @@ describe('WeatherComponent', () => {
       updateUnit: vi.fn(),
     };
 
+    mockAuthService = { logout: vi.fn() };
+
     await TestBed.configureTestingModule({
       imports: [WeatherComponent],
-      providers: [{ provide: WeatherStore, useValue: mockStore }],
+      providers: [
+        { provide: WeatherStore, useValue: mockStore },
+        { provide: AuthService, useValue: mockAuthService },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(WeatherComponent);
@@ -150,5 +158,11 @@ describe('WeatherComponent', () => {
 
       expect(el().querySelector('.temp-unit')?.textContent).toContain('°F');
     });
+  });
+
+  it('debería cerrar la sesión al pulsar el botón de logout', () => {
+    (el().querySelector('button[aria-label="Cerrar sesión"]') as HTMLButtonElement).click();
+
+    expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
   });
 });

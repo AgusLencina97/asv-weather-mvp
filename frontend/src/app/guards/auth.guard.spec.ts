@@ -1,13 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
-import { signal } from '@angular/core';
-import { vi } from 'vitest';
+import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, UrlTree, provideRouter } from '@angular/router';
 import { authGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
 
 describe('authGuard', () => {
-  const isAuthenticated = signal(false);
-  const routerSpy = { navigate: vi.fn() };
+  let authenticated: boolean;
 
   const runGuard = () =>
     TestBed.runInInjectionContext(() =>
@@ -15,26 +12,25 @@ describe('authGuard', () => {
     );
 
   beforeEach(() => {
-    routerSpy.navigate.mockClear();
+    authenticated = false;
     TestBed.configureTestingModule({
       providers: [
-        { provide: AuthService, useValue: { isAuthenticated } },
-        { provide: Router, useValue: routerSpy },
+        provideRouter([]),
+        { provide: AuthService, useValue: { isAuthenticated: () => authenticated } },
       ],
     });
   });
 
   it('debería permitir el acceso si el usuario está autenticado', () => {
-    isAuthenticated.set(true);
+    authenticated = true;
 
     expect(runGuard()).toBe(true);
-    expect(routerSpy.navigate).not.toHaveBeenCalled();
   });
 
-  it('debería bloquear el acceso y redirigir a /login si no está autenticado', () => {
-    isAuthenticated.set(false);
+  it('debería redirigir a /login si no está autenticado', () => {
+    const result = runGuard();
 
-    expect(runGuard()).toBe(false);
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+    expect(result).toBeInstanceOf(UrlTree);
+    expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login');
   });
 });

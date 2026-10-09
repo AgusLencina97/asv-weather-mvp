@@ -8,7 +8,10 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { WeatherStore } from '../../stores/weather.store';
+import { AuthService } from '../../services/auth.service';
 import { Municipio } from '../../interfaces/models/municipio';
 
 @Component({
@@ -16,13 +19,15 @@ import { Municipio } from '../../interfaces/models/municipio';
   standalone: true,
   imports: [
     CommonModule, ReactiveFormsModule, MatFormFieldModule, MatInputModule,
-    MatAutocompleteModule, MatSelectModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, DatePipe
+    MatAutocompleteModule, MatSelectModule, MatCardModule, MatIconModule, MatProgressSpinnerModule, MatButtonModule,
+    MatTooltipModule, DatePipe
   ],
   templateUrl: './weather.component.html',
   styleUrls: ['./weather.component.scss']
 })
 export class WeatherComponent implements OnInit {
   store = inject(WeatherStore);
+  private readonly authService = inject(AuthService);
   searchControl = new FormControl('');
   today = new Date();
 
@@ -40,6 +45,10 @@ export class WeatherComponent implements OnInit {
 
   onMunicipioSelected(event: MatAutocompleteSelectedEvent) {
     this.store.setSelectedMunicipio(event.option.value);
+  }
+
+  logout() {
+    this.authService.logout();
   }
 
   onUnitChange(unit: string) {

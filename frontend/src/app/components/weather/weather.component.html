@@ -21,6 +21,11 @@
         <mat-option value="G_FAH">°F</mat-option>
       </mat-select>
     </mat-form-field>
+
+    <button mat-icon-button class="logout-button" type="button" (click)="logout()"
+            aria-label="Cerrar sesión" matTooltip="Cerrar sesión">
+      <mat-icon>logout</mat-icon>
+    </button>
   </div>
 
   @if (store.isLoading()) {

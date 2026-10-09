@@ -4,12 +4,7 @@ import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
-  const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
-    return true;
-  }
-  
-  router.navigate(['/login']);
-  return false;
+  // Devolver un UrlTree hace que el router redirija sin una navegación extra
+  return authService.isAuthenticated() ? true : inject(Router).createUrlTree(['/login']);
 };

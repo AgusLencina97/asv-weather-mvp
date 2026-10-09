@@ -9,16 +9,20 @@
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
         <mat-form-field appearance="outline">
           <mat-label>Usuario</mat-label>
-          <input matInput formControlName="username" type="text" placeholder="Ej: admin">
+          <input matInput formControlName="username" type="text" autocomplete="username" placeholder="Ej: admin">
         </mat-form-field>
 
         <mat-form-field appearance="outline">
           <mat-label>Contraseña</mat-label>
-          <input matInput formControlName="password" type="password">
+          <input matInput formControlName="password" type="password" autocomplete="current-password">
         </mat-form-field>
 
-        <button mat-flat-button color="primary" type="submit" [disabled]="loginForm.invalid">
-          Ingresar
+        @if (errorMessage(); as message) {
+          <p class="login-error" role="alert">{{ message }}</p>
+        }
+
+        <button mat-flat-button type="submit" [disabled]="loginForm.invalid || isSubmitting()">
+          {{ isSubmitting() ? 'Ingresando...' : 'Ingresar' }}
         </button>
       </form>
     </mat-card-content>
